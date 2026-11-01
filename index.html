@@ -462,6 +462,36 @@ footer strong {
     gap: 0.8rem;
   }
 }
+
+
+/* FORMULÁRIO DO CLIENTE */
+
+#customerName {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: white;
+  outline: none;
+}
+
+#customerName:focus {
+  border-color: var(--purple) !important;
+  box-shadow: 0 0 0 3px #29243f15;
+}
+
+#customerOverlay .modal {
+  max-width: 420px;
+}
+
+#customerOverlay .primary-button {
+  background: var(--purple);
+}
+
+#customerOverlay .primary-button:hover {
+  background: var(--purple-light);
+}
+
+
 </style>
 </head>
 
@@ -578,6 +608,115 @@ footer strong {
   </div>
 </div>
 
+<!-- MODAL DE IDENTIFICAÇÃO DO CLIENTE -->
+
+<div class="overlay" id="customerOverlay">
+
+  <div class="modal">
+
+    <div class="modal-header">
+
+      <h2>Quase lá! 😋</h2>
+
+      <button class="close"
+        onclick="closeCustomer()">×</button>
+
+    </div>
+
+    <p style="color:var(--muted); line-height:1.5; margin-bottom:1.3rem">
+
+      Para continuar com seu pedido, informe seus dados.
+
+    </p>
+
+    <!-- NOME -->
+
+    <div class="field">
+
+      <label for="customerName">
+        Seu nome completo:
+      </label>
+
+      <input
+        type="text"
+        id="customerName"
+        placeholder="Digite seu nome"
+        maxlength="80"
+        autocomplete="name"
+        style="width:100%; padding:0.85rem;
+        border:1px solid var(--border);
+        border-radius:0.7rem"
+      >
+
+    </div>
+
+    <!-- PAGAMENTO -->
+
+    <div class="field">
+
+      <label for="paymentMethod">
+        Forma de pagamento:
+      </label>
+
+      <select id="paymentMethod">
+
+        <option value="">Selecione uma opção</option>
+
+        <option value="Pix">Pix</option>
+
+        <option value="Dinheiro">Dinheiro</option>
+
+      </select>
+
+    </div>
+
+    <button class="primary-button"
+      onclick="continueToWhatsApp()">
+
+      Continuar para o WhatsApp
+
+    </button>
+
+  </div>
+
+</div>
+
+<!-- POPUP DE AVISO DA CANTINA -->
+
+<div class="overlay" id="noticeOverlay">
+
+  <div class="modal" style="max-width:420px; text-align:center">
+
+    <div style="font-size:2.5rem; margin-bottom:0.8rem">
+      📢
+    </div>
+
+    <h2 style="color:var(--purple); margin-bottom:1rem">
+      Atenção!
+    </h2>
+
+    <p style="line-height:1.7; color:var(--text); margin-bottom:1.5rem">
+
+      Nossa próxima cantina será no dia
+
+      <strong id="noticeDate">XX/XX/XXXX</strong>,
+
+      todos os pedidos realizados serão preparados
+      com todo carinho para retirada neste dia.
+
+    </p>
+
+    <button class="primary-button"
+      style="background:var(--yellow); color:var(--purple)"
+      onclick="closeNotice()">
+
+      Tudo bem
+
+    </button>
+
+  </div>
+
+</div>
 
 <script>
 
@@ -590,7 +729,7 @@ footer strong {
 // Exemplo: 5583999999999
 
 const WHATSAPP = "5583991850401";
-
+const DATA_CANTINA = "XX/XX/XXXX";
 
 // ========================================
 // 2. CADASTRO DOS PRODUTOS
@@ -653,6 +792,9 @@ const products = [
   }
 
 ];
+
+
+
 
 
 // ========================================
@@ -1082,6 +1224,11 @@ function removeItem(index) {
 // 17. SOLICITAR PELO WHATSAPP
 // ========================================
 
+
+// ========================================
+// 17. ABRIR IDENTIFICAÇÃO DO CLIENTE
+// ========================================
+
 function sendWhatsApp() {
 
   if (cart.length === 0) {
@@ -1089,17 +1236,78 @@ function sendWhatsApp() {
     return;
   }
 
-  if (!/^55\d{10,11}$/.test(WHATSAPP)) {
-    alert("Configure corretamente o número do WhatsApp no código.");
+  // Fecha o carrinho e abre a identificação.
+  closeCart();
+
+  const overlay = document.getElementById("customerOverlay");
+
+  overlay.classList.add("active");
+
+  // Recupera o nome anteriormente digitado.
+  const savedName =
+    localStorage.getItem("adoleLancheNome") || "";
+
+  document.getElementById("customerName").value =
+    savedName;
+
+}
+
+
+// ========================================
+// 18. FECHAR IDENTIFICAÇÃO
+// ========================================
+
+function closeCustomer() {
+
+  document.getElementById("customerOverlay")
+    .classList.remove("active");
+
+}
+
+
+// ========================================
+// 19. CONTINUAR PARA O WHATSAPP
+// ========================================
+
+function continueToWhatsApp() {
+
+  const name =
+    document.getElementById("customerName")
+      .value.trim();
+
+  if (!name) {
+    alert("Por favor, informe seu nome!");
+    document.getElementById("customerName").focus();
     return;
   }
 
+  if (cart.length === 0) {
+    alert("Seu carrinho está vazio!");
+    closeCustomer();
+    return;
+  }
+
+  if (!/^55\d{10,11}$/.test(WHATSAPP)) {
+    alert("Configure corretamente o número do WhatsApp.");
+    return;
+  }
+
+  // Salva o nome para uma próxima compra.
+  localStorage.setItem("adoleLancheNome", name);
+
+  // Calcula o valor total.
   const total = cart.reduce((sum, item) =>
     sum + item.price * item.quantity, 0
   );
 
+  // Monta a mensagem.
   let message =
     "Olá! Tudo bem? Gostaria de fazer um pedido na Adole Lanche! 😋\n\n";
+
+  message +=
+    "*NOME DO CLIENTE:*\n" +
+    name +
+    "\n\n";
 
   message += "*MEU PEDIDO:*\n\n";
 
@@ -1125,18 +1333,209 @@ function sendWhatsApp() {
     "?text=" +
     encodeURIComponent(message);
 
+  // Abre o WhatsApp.
   window.open(url, "_blank");
+
+  // Fecha somente a janela de identificação.
+  // NÃO apaga o carrinho.
+  closeCustomer();
+
+}
+
+// ========================================
+// POPUP DE ABERTURA
+// ========================================
+
+function openNotice() {
+
+  document.getElementById("noticeDate")
+    .textContent = DATA_CANTINA;
+
+  document.getElementById("noticeOverlay")
+    .classList.add("active");
+
+}
+
+function closeNotice() {
+
+  document.getElementById("noticeOverlay")
+    .classList.remove("active");
 
 }
 
 
 // ========================================
-// 18. INICIALIZAÇÃO
+// ATUALIZAR ABERTURA DO FORMULÁRIO
+// ========================================
+
+function sendWhatsApp() {
+
+  if (cart.length === 0) {
+
+    alert("Seu carrinho está vazio!");
+    return;
+
+  }
+
+  closeCart();
+
+  const savedName =
+    localStorage.getItem("adoleLancheNome") || "";
+
+  const savedPayment =
+    localStorage.getItem("adoleLanchePagamento") || "";
+
+  document.getElementById("customerName").value =
+    savedName;
+
+  document.getElementById("paymentMethod").value =
+    savedPayment;
+
+  document.getElementById("customerOverlay")
+    .classList.add("active");
+
+}
+
+
+// ========================================
+// FECHAR IDENTIFICAÇÃO
+// ========================================
+
+function closeCustomer() {
+
+  document.getElementById("customerOverlay")
+    .classList.remove("active");
+
+}
+
+
+// ========================================
+// CONTINUAR PARA O WHATSAPP
+// ========================================
+
+function continueToWhatsApp() {
+
+  const name =
+    document.getElementById("customerName")
+      .value.trim();
+
+  const payment =
+    document.getElementById("paymentMethod").value;
+
+  if (!name) {
+
+    alert("Por favor, informe seu nome!");
+
+    document.getElementById("customerName").focus();
+
+    return;
+
+  }
+
+  if (!payment) {
+
+    alert("Selecione a forma de pagamento!");
+
+    document.getElementById("paymentMethod").focus();
+
+    return;
+
+  }
+
+  if (cart.length === 0) {
+
+    alert("Seu carrinho está vazio!");
+
+    closeCustomer();
+
+    return;
+
+  }
+
+  if (!/^55\d{10,11}$/.test(WHATSAPP)) {
+
+    alert("Configure corretamente o número do WhatsApp.");
+
+    return;
+
+  }
+
+  // SALVAR DADOS DO CLIENTE
+
+  localStorage.setItem("adoleLancheNome", name);
+
+  localStorage.setItem("adoleLanchePagamento", payment);
+
+
+  // CALCULAR TOTAL
+
+  const total = cart.reduce((sum, item) =>
+    sum + item.price * item.quantity, 0
+  );
+
+
+  // MONTAR MENSAGEM
+
+  let message =
+    "Olá! Tudo bem? Gostaria de fazer um pedido na Adole Lanche! 😋\n\n";
+
+  message +=
+    "*NOME DO CLIENTE:*\n" +
+    name +
+    "\n\n";
+
+  message +=
+    "*FORMA DE PAGAMENTO:*\n" +
+    payment +
+    "\n\n";
+
+  message += "*MEU PEDIDO:*\n\n";
+
+
+  cart.forEach(item => {
+
+    message +=
+      `🍴 ${item.name}\n` +
+      `• Sabor: ${item.flavor}\n` +
+      `• Quantidade: ${item.quantity}\n` +
+      `• Subtotal: ${money(item.price * item.quantity)}\n\n`;
+
+  });
+
+
+  message +=
+    "--------------------------\n" +
+    `*TOTAL: ${money(total)}*\n\n` +
+    "Aguardo a confirmação do pedido!\n" +
+    "Obrigado! ❤️";
+
+
+  // ABRIR WHATSAPP
+
+  const url =
+    "https://wa.me/" +
+    WHATSAPP +
+    "?text=" +
+    encodeURIComponent(message);
+
+  window.open(url, "_blank");
+
+  // NÃO LIMPAR O CARRINHO
+
+  closeCustomer();
+
+}
+
+// ========================================
+// INICIALIZAÇÃO
 // ========================================
 
 renderProducts();
 updateCartCount();
 renderCart();
+
+// Mostrar aviso automaticamente ao abrir a loja.
+openNotice();
 
 </script>
 
