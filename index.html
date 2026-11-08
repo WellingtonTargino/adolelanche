@@ -152,6 +152,7 @@ main {
 }
 
 .product {
+  position: relative;
   background: white;
   border-radius: 1rem;
   overflow: hidden;
@@ -492,6 +493,21 @@ footer strong {
 }
 
 
+/* TARJA DE EXCLUSIVIDADE PELO SITE */
+
+.exclusive-badge {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.7rem;
+    background: #7136c9;
+    color: white;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: bold;
+    z-index: 2;
+    box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.15);
+}
 </style>
 </head>
 
@@ -729,7 +745,7 @@ footer strong {
 // Exemplo: 5583999999999
 
 const WHATSAPP = "5583991850401";
-const DATA_CANTINA = "XX/XX/XXXX";
+const DATA_CANTINA = "15/11/2026";
 
 // ========================================
 // 2. CADASTRO DOS PRODUTOS
@@ -742,33 +758,33 @@ const products = [
 
   {
     id: 1,
-    name: "Coxinha",
+    name: "Coxinha + Refri",
     description: "Deliciosa e crocante!",
-    price: 6.00,
-
+    price: 7.00,
+    exclusive: false,
     image:
       "https://www.adoro.com.br/wp-content/uploads/2025/07/blog__0001_texto-15-Mini-Coxinhas-de-Frango-Adoro-para-Festa.jpg",
 
     flavors: [
       "Frango",
       "Frango com Catupiry",
-      "Carne"
+      "Carne de Sol"
     ]
   },
 
   {
     id: 2,
-    name: "Empada",
+    name: "Empada + Refri",
     description: "Massa leve e saborosa!",
     price: 7.00,
-
+    exclusive: false,
     image:
       "https://files.ndeal.app/api/images/producao.spayce.com.br/1776102506018_2024_12_06_edicaseempada_de_camarao_imagem_flanovais_shutterstock_t5nz620s.jpg?",
 
     flavors: [
       "Frango",
-      "Frango com Catupiry",
-      "Palmito",
+      "Carne de Sol",
+      "Doce de Leite",
       "Queijo"
     ]
   },
@@ -778,9 +794,10 @@ const products = [
     name: "Bolo de pote",
     description: "Uma delícia em cada colherada!",
     price: 10.00,
+    exclusive: true,
 
     image:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=700",
+      "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTgmT1fydR7M5D5St5Yqyf7bRVIEXcL8j_oUatlIlfmZuwyVkSZdppcTN1eiy1keEuJdgGyNfNUtDq7aDtvybKFbHfBkFXUvg",
 
     flavors: [
       "Chocolate",
@@ -789,8 +806,23 @@ const products = [
       "Morango",
       "Prestígio"
     ]
-  }
+  },
 
+  {
+    id: 4,
+    name: "Brownie",
+    description: "Uma delícia em cada Mordida!",
+    price: 10.00,
+    exclusive: true,
+
+    image:
+      "https://viverdeconfeitaria.com.br/_next/image?url=https%3A%2F%2Fmxjvevmsioevluhkleup.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fblog-images%2Fposts%2Fbrownie-recheado-camadas-dia-pais.webp&w=1080&q=75",
+
+    flavors: [
+      "Chocolate",
+      "Chocolate branco"
+    ]
+  }
 ];
 
 
@@ -855,6 +887,11 @@ function renderProducts() {
 
     <article class="product"
       onclick="openProduct(${product.id})">
+            ${product.exclusive ? `
+          <span class="exclusive-badge">
+              Compra apenas pelo site
+          </span>
+      ` : ""}
 
       <img
         src="${product.image}"
@@ -1216,129 +1253,6 @@ function removeItem(index) {
   cart.splice(index, 1);
 
   saveCart();
-
-}
-
-
-// ========================================
-// 17. SOLICITAR PELO WHATSAPP
-// ========================================
-
-
-// ========================================
-// 17. ABRIR IDENTIFICAÇÃO DO CLIENTE
-// ========================================
-
-function sendWhatsApp() {
-
-  if (cart.length === 0) {
-    alert("Seu carrinho está vazio!");
-    return;
-  }
-
-  // Fecha o carrinho e abre a identificação.
-  closeCart();
-
-  const overlay = document.getElementById("customerOverlay");
-
-  overlay.classList.add("active");
-
-  // Recupera o nome anteriormente digitado.
-  const savedName =
-    localStorage.getItem("adoleLancheNome") || "";
-
-  document.getElementById("customerName").value =
-    savedName;
-
-}
-
-
-// ========================================
-// 18. FECHAR IDENTIFICAÇÃO
-// ========================================
-
-function closeCustomer() {
-
-  document.getElementById("customerOverlay")
-    .classList.remove("active");
-
-}
-
-
-// ========================================
-// 19. CONTINUAR PARA O WHATSAPP
-// ========================================
-
-function continueToWhatsApp() {
-
-  const name =
-    document.getElementById("customerName")
-      .value.trim();
-
-  if (!name) {
-    alert("Por favor, informe seu nome!");
-    document.getElementById("customerName").focus();
-    return;
-  }
-
-  if (cart.length === 0) {
-    alert("Seu carrinho está vazio!");
-    closeCustomer();
-    return;
-  }
-
-  if (!/^55\d{10,11}$/.test(WHATSAPP)) {
-    alert("Configure corretamente o número do WhatsApp.");
-    return;
-  }
-
-  // Salva o nome para uma próxima compra.
-  localStorage.setItem("adoleLancheNome", name);
-
-  // Calcula o valor total.
-  const total = cart.reduce((sum, item) =>
-    sum + item.price * item.quantity, 0
-  );
-
-  // Monta a mensagem.
-  let message =
-    "Olá! Tudo bem? Gostaria de fazer um pedido na Adole Lanche! 😋\n\n";
-
-  message +=
-    "*NOME DO CLIENTE:*\n" +
-    name +
-    "\n\n";
-
-  message += "*MEU PEDIDO:*\n\n";
-
-  cart.forEach(item => {
-
-    message +=
-      `🍴 ${item.name}\n` +
-      `• Sabor: ${item.flavor}\n` +
-      `• Quantidade: ${item.quantity}\n` +
-      `• Subtotal: ${money(item.price * item.quantity)}\n\n`;
-
-  });
-
-  message +=
-    "--------------------------\n" +
-    `*TOTAL: ${money(total)}*\n\n` +
-    "Aguardo a confirmação do pedido!\n" +
-    "Obrigado! ❤️";
-
-  const url =
-    "https://wa.me/" +
-    WHATSAPP +
-    "?text=" +
-    encodeURIComponent(message);
-
-  // Abre o WhatsApp.
-  window.open(url, "_blank");
-
-  // Fecha somente a janela de identificação.
-  // NÃO apaga o carrinho.
-  closeCustomer();
 
 }
 
